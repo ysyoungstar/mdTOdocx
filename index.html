@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Markdown 转 Word · Pandoc 可视化工具</title>
+  <!-- 样式按模块拆分，便于维护 -->
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+  <!-- ============ 顶栏：标题 + 状态 + 主操作 ============ -->
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-logo">MD</span>
+      <div class="brand-text">
+        <h1>Markdown → Word</h1>
+        <p>基于本机 Pandoc 的可视化转换工具</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- 服务状态灯：点击可重新检测 -->
+      <button class="status-pill" id="server-status" data-state="unknown" title="点击重新检测 Pandoc 服务">
+        <i class="dot"></i>
+        <span id="server-status-text">检测中…</span>
+      </button>
+      <button class="btn btn-ghost" id="btn-open-md" title="选择一个 Markdown 文件 (Ctrl+O)">打开 MD</button>
+      <button class="btn btn-ghost" id="btn-sample" title="载入内置示例文档">示例</button>
+      <button class="btn btn-ghost" id="btn-theme" title="切换深色 / 浅色主题">主题</button>
+      <button class="btn btn-primary" id="btn-convert" title="转换为 DOCX (Ctrl+Enter)">转换为 DOCX</button>
+    </div>
+  </header>
+
+  <!-- ============ 主体：编辑 / 预览 / 选项 ============ -->
+  <main class="app-main" id="app-main">
+    <!-- 左侧：Markdown 编辑器 -->
+    <section class="pane pane-editor" id="pane-editor">
+      <div class="pane-head">
+        <h2 class="pane-title">Markdown 源文件</h2>
+        <div class="pane-tools">
+          <span class="file-badge" id="file-badge" hidden></span>
+          <button class="btn btn-mini" id="btn-clear" title="清空编辑器">清空</button>
+        </div>
+      </div>
+
+      <!-- 拖拽区：支持 dragging 高亮 -->
+      <div class="editor-wrap" id="editor-drop">
+        <textarea id="markdown-input" class="editor" spellcheck="false"
+          placeholder="在此粘贴 Markdown，或把 .md 文件拖到这里…"></textarea>
+        <div class="drop-mask" id="drop-mask">
+          <span>松开鼠标载入 Markdown 文件</span>
+        </div>
+      </div>
+
+      <div class="pane-foot">
+        <span id="stat-chars">0 字符</span>
+        <span id="stat-lines">0 行</span>
+        <span id="stat-ingest">未载入文件</span>
+      </div>
+    </section>
+
+    <!-- 可拖拽分隔条 -->
+    <div class="splitter" id="splitter" title="拖动调整宽度"></div>
+
+    <!-- 中间：预览面板 -->
+    <section class="pane pane-preview" id="pane-preview">
+      <div class="pane-head">
+        <h2 class="pane-title">实时预览</h2>
+        <div class="pane-tools">
+          <label class="switch" title="输入后自动刷新预览">
+            <input type="checkbox" id="preview-auto" checked />
+            <span>自动</span>
+          </label>
+          <button class="btn btn-mini" id="btn-refresh-preview">刷新</button>
+        </div>
+      </div>
+      <div class="preview-wrap">
+        <!-- sandbox 未授予 allow-scripts，预览内容不会执行脚本 -->
+        <iframe id="preview-frame" class="preview-frame" sandbox="allow-same-origin" title="预览"></iframe>
+        <div class="preview-empty" id="preview-empty">预览区将显示 Pandoc 渲染后的排版效果</div>
+      </div>
+    </section>
+
+    <!-- 右侧：选项抽屉 + 资源 + 日志 -->
+    <aside class="pane pane-side" id="pane-side">
+      <div class="side-tabs" role="tablist">
+        <button class="tab is-active" data-tab="options" role="tab">转换选项</button>
+        <button class="tab" data-tab="assets" role="tab">模板与图片</button>
+        <button class="tab" data-tab="log" role="tab">日志与历史</button>
+      </div>
+
+      <!-- Tab 1：选项表单（由 js/options.js 依据 js/config.js 动态生成） -->
+      <div class="side-body" id="tab-options">
+        <form id="options-form" class="options-form" autocomplete="off"></form>
+      </div>
+
+      <!-- Tab 2：模板与图片资源 -->
+      <div class="side-body" id="tab-assets" hidden>
+        <div class="field-group">
+          <h3 class="group-title">Word 模板（reference.docx）</h3>
+          <p class="hint">选择自定义模板可控制字体、页边距与样式。模板会以 base64 发送给 Pandoc。</p>
+          <div class="row">
+            <button type="button" class="btn btn-outline" id="btn-open-ref">选择模板</button>
+            <button type="button" class="btn btn-mini" id="btn-clear-ref" disabled>移除</button>
+          </div>
+          <p class="asset-state" id="ref-state">未选择模板，将使用 Pandoc 默认样式</p>
+        </div>
+
+        <div class="field-group">
+          <h3 class="group-title">图片资源</h3>
+          <p class="hint">选择图片后会随请求一起发送；点击文件名可把图片引用插入正文。</p>
+          <div class="row">
+            <button type="button" class="btn btn-outline" id="btn-open-img">添加图片</button>
+            <button type="button" class="btn btn-mini" id="btn-clear-img" disabled>全部移除</button>
+          </div>
+          <ul class="asset-list" id="image-list"></ul>
+        </div>
+      </div>
+
+      <!-- Tab 3：转换日志 / 历史 -->
+      <div class="side-body" id="tab-log" hidden>
+        <div class="field-group">
+          <h3 class="group-title">本次转换消息</h3>
+          <ul class="message-list" id="message-list">
+            <li class="muted">尚无转换记录</li>
+          </ul>
+        </div>
+        <div class="field-group">
+          <div class="group-head">
+            <h3 class="group-title">历史记录</h3>
+            <button type="button" class="btn btn-mini" id="btn-clear-history">清空</button>
+          </div>
+          <ul class="history-list" id="history-list">
+            <li class="muted">暂无历史</li>
+          </ul>
+        </div>
+        <div class="field-group">
+          <h3 class="group-title">错误详情</h3>
+          <pre class="error-box" id="error-box">无</pre>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ============ 底部状态栏 ============ -->
+  <footer class="app-footer">
+    <span id="footer-message">准备就绪</span>
+    <span class="spacer"></span>
+    <span id="footer-version">Pandoc 版本：未知</span>
+    <span id="footer-timing"></span>
+  </footer>
+
+  <!-- 隐藏的文件选择器 -->
+  <input type="file" id="file-md" accept=".md,.markdown,.mdown,.mkd,.txt" hidden multiple />
+  <input type="file" id="file-ref" accept=".docx" hidden />
+  <input type="file" id="file-img" accept="image/*" hidden multiple />
+
+  <!-- 轻提示容器 -->
+  <div class="toast-stack" id="toast-stack"></div>
+
+  <!-- 脚本按依赖顺序加载（无构建、无需模块服务器） -->
+  <script src="js/config.js"></script>
+  <script src="js/pandoc-client.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/options.js"></script>
+  <script src="js/preview.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

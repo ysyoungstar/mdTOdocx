@@ -1,0 +1,265 @@
+/* =============================================================
+   layout.css —— 整体骨架布局（顶栏 / 三栏主体 / 底栏）
+   ============================================================= */
+
+/* ---------- 顶栏 ---------- */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: var(--header-h);
+  padding: 0 16px;
+  flex: 0 0 auto;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-logo {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.brand-text h1 {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.brand-text p {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ---------- 主体三栏 ---------- */
+.app-main {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 6px minmax(260px, 1fr) 340px;
+  min-height: 0;
+  padding: 10px;
+  gap: 0;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.pane-editor {
+  margin-right: 0;
+}
+
+.pane-preview {
+  margin-left: 0;
+}
+
+.pane-side {
+  margin-left: 10px;
+}
+
+/* 面板标题条 */
+.pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sunken);
+  flex: 0 0 auto;
+}
+
+.pane-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pane-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 面板底部统计条 */
+.pane-foot {
+  display: flex;
+  gap: 14px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-sunken);
+  color: var(--text-muted);
+  font-size: 12px;
+  flex: 0 0 auto;
+}
+
+/* 编辑器区域 */
+.editor-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.editor {
+  width: 100%;
+  height: 100%;
+  padding: 14px 16px;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.75;
+  tab-size: 4;
+}
+
+/* 预览区域 */
+.preview-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: #fff;
+}
+
+.preview-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #fff;
+}
+
+/* ---------- 分隔条 ---------- */
+.splitter {
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  z-index: 5;
+}
+
+.splitter::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 2px;
+  height: 40px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: var(--border-strong);
+  transition: background 0.15s;
+}
+
+.splitter:hover::after,
+.splitter.is-dragging::after {
+  background: var(--brand);
+}
+
+/* ---------- 底栏 ---------- */
+.app-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: var(--footer-h);
+  padding: 0 14px;
+  flex: 0 0 auto;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.app-footer .spacer {
+  flex: 1 1 auto;
+}
+
+/* ---------- 右侧抽屉内部滚动区 ---------- */
+.side-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.side-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sunken);
+}
+
+.side-tabs .tab {
+  flex: 1 1 0;
+  padding: 9px 6px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.side-tabs .tab:hover {
+  background: var(--bg-hover);
+}
+
+.side-tabs .tab.is-active {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+  background: var(--bg-elevated);
+  font-weight: 600;
+}
+
+/* ---------- 响应式：窄屏堆叠 ---------- */
+@media (max-width: 1180px) {
+  .app-main {
+    grid-template-columns: 1fr;
+    grid-auto-rows: minmax(220px, 1fr);
+    gap: 10px;
+    overflow-y: auto;
+  }
+
+  .pane-side,
+  .pane-preview {
+    margin-left: 0;
+  }
+
+  .splitter {
+    display: none;
+  }
+}
