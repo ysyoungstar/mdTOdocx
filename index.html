@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Markdown 转 Word · Pandoc 可视化工具</title>
-  <!-- 样式按模块拆分，便于维护 -->
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/layout.css" />
-  <link rel="stylesheet" href="css/components.css" />
+  <!-- 样式按模块拆分，便于维护；?v= 参数用于绕过浏览器缓存（改动后递增） -->
+  <link rel="stylesheet" href="css/base.css?v=3" />
+  <link rel="stylesheet" href="css/layout.css?v=3" />
+  <link rel="stylesheet" href="css/components.css?v=3" />
 </head>
 <body data-mode="toDocx">
   <!-- 转换方向：body[data-mode] 是全局状态；面板用 data-pane-mode，模式按钮用 data-target -->
@@ -249,15 +249,15 @@
   <!-- 轻提示容器 -->
   <div class="toast-stack" id="toast-stack"></div>
 
-  <!-- 脚本按依赖顺序加载（无构建、无需模块服务器） -->
-  <script src="js/config.js"></script>
-  <script src="js/pandoc-client.js"></script>
-  <script src="js/bridge-client.js"></script>
-  <script src="js/history.js"></script>
-  <script src="js/options.js"></script>
-  <script src="js/preview.js"></script>
-  <script src="js/editor.js"></script>
-  <script src="js/reverse.js"></script>
-  <script src="js/app.js"></script>
+  <!-- 脚本按依赖顺序加载（无构建、无需模块服务器）；?v= 参数用于绕过浏览器缓存 -->
+  <script src="js/config.js?v=3"></script>
+  <script src="js/pandoc-client.js?v=3"></script>
+  <script src="js/bridge-client.js?v=3"></script>
+  <script src="js/history.js?v=3"></script>
+  <script src="js/options.js?v=3"></script>
+  <script src="js/preview.js?v=3"></script>
+  <script src="js/editor.js?v=3"></script>
+  <script src="js/reverse.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
 </body>
 </html>

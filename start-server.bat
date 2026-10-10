@@ -4,7 +4,7 @@ setlocal
 rem ============================================================
 rem  mdTOdocx - start local services (IPv4 loopback only)
 rem  1) pandoc server       : converts Markdown to DOCX
-rem  2) python http.server  : serves this folder as a web page
+rem  2) serve-pages.py      : serves this folder as a web page (no-cache)
 rem  3) convert-server.py   : HTML/DOCX to Markdown, exports images (bridge)
 rem ============================================================
 
@@ -41,7 +41,7 @@ goto nopython
 echo [1/4] starting pandoc server on port %PANDOC_PORT% ...
 start "pandoc-server" /min /d "%APP_DIR%" pandoc server -p %PANDOC_PORT% -t %PANDOC_TIMEOUT%
 echo [2/4] starting page server on %BIND_IP%:%WEB_PORT% ...
-start "md2docx-web" /min /d "%APP_DIR%" %PYTHON_CMD% -m http.server %WEB_PORT% --bind %BIND_IP%
+start "md2docx-web" /min /d "%APP_DIR%" %PYTHON_CMD% "%APP_DIR%\serve-pages.py" %WEB_PORT% %BIND_IP%
 echo [3/4] starting markdown bridge on %BIND_IP%:%BRIDGE_PORT% ...
 start "md2docx-bridge" /min /d "%APP_DIR%" %PYTHON_CMD% convert-server.py --port %BRIDGE_PORT% --timeout %BRIDGE_TIMEOUT%
 echo [4/4] waiting for page server and bridge ...
