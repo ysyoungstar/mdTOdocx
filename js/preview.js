@@ -186,6 +186,8 @@
   ns.preview = {
     init: init,
     schedule: schedule,
-    render: render
+    render: render,
+    // 供反向转换面板复用同一套预览样式，保证观感一致
+    PREVIEW_CSS: PREVIEW_CSS
   };
 })(window.MD2DOCX);

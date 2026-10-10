@@ -16,11 +16,13 @@
     ns.options.init();
     ns.preview.init();
     ns.editor.init();
+    ns.reverse.init();          // 反向转换面板（Word / HTML → Markdown）
 
     bindTabs();
     bindActions();
     bindBus();
     bindSplitter();
+    bindModeSwitch();
     renderHistory();
 
     detectServer(true);
@@ -51,6 +53,22 @@
       if (notify) {
         toast('warning', '未检测到 Pandoc 服务，请先双击 start-server.bat 启动本地服务');
       }
+    }
+    // 同时检测反向转换桥接服务（Word / HTML → Markdown）
+    detectBridge();
+  }
+
+  /** 检测本机桥接服务（convert-server.py，端口 3040） */
+  async function detectBridge() {
+    const el = $('footer-bridge');
+    if (!el) return;
+    try {
+      const info = await ns.bridge.checkVersion();
+      el.textContent = '桥接：可用' + (info.bridge ? ' v' + info.bridge : '');
+      el.dataset.state = 'online';
+    } catch (err) {
+      el.textContent = '桥接：未启动（反向转换不可用）';
+      el.dataset.state = 'offline';
     }
   }
 
@@ -108,7 +126,8 @@
     });
 
     $('server-status').addEventListener('click', function () { detectServer(true); });
-    $('btn-convert').addEventListener('click', convert);
+    // 主按钮按当前模式分发：转换为 DOCX 或 转换为 Markdown
+    $('btn-convert').addEventListener('click', onPrimaryAction);
     $('btn-sample').addEventListener('click', loadSample);
     $('btn-clear-history').addEventListener('click', function () {
       renderHistory(ns.history.clear());
@@ -120,7 +139,7 @@
       const ctrl = e.ctrlKey || e.metaKey;
       if (ctrl && e.key === 'Enter') {
         e.preventDefault();
-        convert();
+        onPrimaryAction();
       } else if (ctrl && e.key.toLowerCase() === 's') {
         e.preventDefault();
         convert();
@@ -136,6 +155,63 @@
     ns.bus.on('toast', function (payload) {
       if (payload && payload.text) toast(payload.type, payload.text);
     });
+  }
+
+  /* ======================= 转换方向切换 ======================= */
+
+  /** 当前转换方向：toDocx（默认）或 toMarkdown */
+  let currentMode = 'toDocx';
+
+  /** 应用转换方向：切换 body[data-mode]，同步主按钮文案 */
+  function applyMode(mode) {
+    currentMode = mode === 'toMarkdown' ? 'toMarkdown' : 'toDocx';
+    document.body.dataset.mode = currentMode;
+
+    Array.prototype.forEach.call(
+      document.querySelectorAll('.mode-switch .mode-btn'),
+      function (btn) {
+        btn.classList.toggle('is-active', btn.dataset.mode === currentMode);
+      }
+    );
+
+    const main = $('btn-convert');
+    if (main) {
+      if (currentMode === 'toMarkdown') {
+        main.textContent = '转换为 Markdown';
+        main.title = '把 DOCX / HTML 转换为 Markdown (Ctrl+Enter)';
+      } else {
+        main.textContent = '转换为 DOCX';
+        main.title = '转换为 DOCX (Ctrl+Enter)';
+      }
+    }
+
+    // 反向模式没有“模板与图片”，若正停留在该页则切回选项页
+    const activeTab = document.querySelector('.side-tabs .tab.is-active');
+    if (currentMode === 'toMarkdown' && activeTab && activeTab.dataset.tab === 'assets') {
+      const optionsTab = document.querySelector('.side-tabs .tab[data-tab="options"]');
+      if (optionsTab) optionsTab.click();
+    }
+  }
+
+  /** 绑定转换方向切换按钮 */
+  function bindModeSwitch() {
+    const box = $('mode-switch');
+    if (!box) return;
+    Array.prototype.forEach.call(box.querySelectorAll('.mode-btn'), function (btn) {
+      btn.addEventListener('click', function () {
+        if (btn.dataset.mode === currentMode) return;
+        applyMode(btn.dataset.mode);
+        toast('info', currentMode === 'toMarkdown'
+          ? '已切换到 Word / HTML → Markdown'
+          : '已切换到 Markdown → Word');
+      });
+    });
+  }
+
+  /** 主按钮与快捷键的统一入口：按当前模式分发 */
+  function onPrimaryAction() {
+    if (currentMode === 'toMarkdown') ns.reverse.convert();
+    else convert();
   }
 
   /* ======================= 左右分栏拖拽 ======================= */
@@ -370,6 +446,11 @@
   ns.app = {
     convert: convert,
     toast: toast,
-    detectServer: detectServer
+    detectServer: detectServer,
+    // 以下接口供 reverse.js 复用日志、历史与状态栏能力
+    renderMessages: renderMessages,
+    refreshHistory: function (list) { renderHistory(list); },
+    showError: showError,
+    setFooter: setFooter
   };
 })(window.MD2DOCX);

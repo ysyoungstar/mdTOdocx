@@ -460,3 +460,133 @@
 .preview-status[data-kind="error"] {
   background: rgba(214, 69, 69, 0.92);
 }
+
+/* =============================================================
+   反向转换（Word / HTML → Markdown）
+   ============================================================= */
+
+/* 转换方向显隐：body[data-mode] 决定显示哪一组面板 */
+body[data-mode="toDocx"] [data-mode="toMarkdown"] {
+  display: none !important;
+}
+
+body[data-mode="toMarkdown"] [data-mode="toDocx"] {
+  display: none !important;
+}
+
+/* ---------- 顶栏分段切换 ---------- */
+.mode-switch {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-sunken);
+}
+
+.mode-btn {
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mode-btn + .mode-btn {
+  border-left: 1px solid var(--border);
+}
+
+.mode-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.mode-btn.is-active {
+  background: var(--brand);
+  color: #fff;
+}
+
+/* ---------- 源文件拖放区 ---------- */
+.drop-zone {
+  margin: 12px 14px 0;
+  padding: 16px 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-sunken);
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.drop-zone.is-dragover {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.drop-zone .drop-title {
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.drop-zone .hint {
+  margin: 4px 0 10px;
+}
+
+/* ---------- 结果区：文本 / 预览 面板 ---------- */
+.reverse-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.reverse-output {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  padding: 14px 16px;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+/* ---------- 导出图片区 ---------- */
+.reverse-media-box {
+  display: flex;
+  flex-direction: column;
+  max-height: 36%;
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.reverse-media-box .asset-list {
+  overflow: auto;
+  padding: 8px 14px 6px;
+}
+
+.reverse-media-box .asset-state {
+  padding: 0 14px 8px;
+  word-break: break-all;
+}
+
+/* ---------- 小按钮激活态（文本 / 预览切换） ---------- */
+.btn-mini.is-active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+/* ---------- 底部状态栏：桥接服务状态 ---------- */
+#footer-bridge[data-state="online"] {
+  color: var(--success);
+}
+
+#footer-bridge[data-state="offline"] {
+  color: var(--warning);
+}

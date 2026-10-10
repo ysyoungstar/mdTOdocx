@@ -9,7 +9,8 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
 </head>
-<body>
+<body data-mode="toDocx">
+  <!-- 当前转换方向由 body[data-mode] 控制：toDocx = Markdown→Word，toMarkdown = Word/HTML→Markdown -->
   <!-- ============ 顶栏：标题 + 状态 + 主操作 ============ -->
   <header class="app-header">
     <div class="brand">
@@ -21,6 +22,11 @@
     </div>
 
     <div class="header-actions">
+      <!-- 转换方向切换 -->
+      <div class="mode-switch" id="mode-switch" role="tablist" title="切换转换方向">
+        <button class="mode-btn is-active" id="mode-to-docx" data-mode="toDocx" role="tab">MD → Word</button>
+        <button class="mode-btn" id="mode-to-markdown" data-mode="toMarkdown" role="tab">Word/HTML → MD</button>
+      </div>
       <!-- 服务状态灯：点击可重新检测 -->
       <button class="status-pill" id="server-status" data-state="unknown" title="点击重新检测 Pandoc 服务">
         <i class="dot"></i>
@@ -35,8 +41,8 @@
 
   <!-- ============ 主体：编辑 / 预览 / 选项 ============ -->
   <main class="app-main" id="app-main">
-    <!-- 左侧：Markdown 编辑器 -->
-    <section class="pane pane-editor" id="pane-editor">
+    <!-- 左侧：Markdown 编辑器（Markdown → Word 模式） -->
+    <section class="pane pane-editor" id="pane-editor" data-mode="toDocx">
       <div class="pane-head">
         <h2 class="pane-title">Markdown 源文件</h2>
         <div class="pane-tools">
@@ -62,10 +68,10 @@
     </section>
 
     <!-- 可拖拽分隔条 -->
-    <div class="splitter" id="splitter" title="拖动调整宽度"></div>
+    <div class="splitter" id="splitter" title="拖动调整宽度" data-mode="toDocx"></div>
 
-    <!-- 中间：预览面板 -->
-    <section class="pane pane-preview" id="pane-preview">
+    <!-- 中间：预览面板（Markdown → Word 模式） -->
+    <section class="pane pane-preview" id="pane-preview" data-mode="toDocx">
       <div class="pane-head">
         <h2 class="pane-title">实时预览</h2>
         <div class="pane-tools">
@@ -84,17 +90,96 @@
       </div>
     </section>
 
+    <!-- ============ 反向模式（Word/HTML → Markdown） ============ -->
+    <!-- 左栏：源文件（DOCX 文件或 HTML 源码） -->
+    <section class="pane pane-editor" id="pane-reverse-source" data-mode="toMarkdown">
+      <div class="pane-head">
+        <h2 class="pane-title">源文件（DOCX / HTML）</h2>
+        <div class="pane-tools">
+          <span class="file-badge" id="reverse-file-badge" hidden></span>
+          <button class="btn btn-mini" id="btn-reverse-clear" title="清空输入与结果">清空</button>
+        </div>
+      </div>
+
+      <!-- 拖放区：支持 .docx 与 .html -->
+      <div class="drop-zone" id="reverse-drop">
+        <p class="drop-title">把 .docx 或 .html 文件拖到这里</p>
+        <p class="hint">DOCX 会读取全部正文并导出内嵌图片；HTML 也可以直接粘贴源码</p>
+        <button type="button" class="btn btn-outline" id="btn-open-reverse">选择文件</button>
+        <p class="hint" id="reverse-input-hint">尚未选择文件；也可以直接在左侧粘贴 HTML 源码。</p>
+      </div>
+
+      <!-- HTML 源码输入（选择 docx 后此处转为只读提示） -->
+      <div class="editor-wrap">
+        <textarea id="reverse-source-text" class="editor" spellcheck="false"
+          placeholder="在此粘贴 HTML 源码，或把 .html / .docx 文件拖到这里…"></textarea>
+      </div>
+    </section>
+
+    <!-- 可拖拽分隔条（反向模式） -->
+    <div class="splitter" id="splitter-reverse" title="拖动调整宽度" data-mode="toMarkdown"></div>
+
+    <!-- 中栏：转换结果 Markdown -->
+    <section class="pane pane-preview" id="pane-reverse-result" data-mode="toMarkdown">
+      <div class="pane-head">
+        <h2 class="pane-title">转换结果 Markdown</h2>
+        <div class="pane-tools">
+          <button class="btn btn-mini is-active" id="btn-view-text">文本</button>
+          <button class="btn btn-mini" id="btn-view-preview">预览</button>
+          <button class="btn btn-mini" id="btn-copy-md">复制</button>
+          <button class="btn btn-mini" id="btn-download-md">下载 .md</button>
+        </div>
+      </div>
+
+      <div class="preview-wrap">
+        <div class="preview-status" id="reverse-status">等待转换</div>
+
+        <!-- 文本视图：结果 Markdown 可编辑 -->
+        <div class="reverse-panel" id="reverse-text-panel">
+          <textarea id="reverse-output" class="editor reverse-output" spellcheck="false"
+            placeholder="转换结果会显示在这里，可直接编辑、复制或下载…"></textarea>
+        </div>
+
+        <!-- 预览视图：把结果 Markdown 再渲染成 HTML -->
+        <div class="reverse-panel" id="reverse-preview-panel" hidden>
+          <iframe id="reverse-preview-frame" class="preview-frame" sandbox="allow-same-origin" title="结果预览"></iframe>
+        </div>
+      </div>
+
+      <!-- 导出图片与输出目录 -->
+      <div class="reverse-media-box">
+        <div class="pane-head">
+          <h2 class="pane-title">导出图片</h2>
+          <div class="pane-tools">
+            <button class="btn btn-mini" id="btn-download-media" disabled>下载图片包 (zip)</button>
+            <button class="btn btn-mini" id="btn-copy-outdir">复制输出路径</button>
+          </div>
+        </div>
+        <ul class="asset-list" id="reverse-media-list">
+          <li class="muted">没有导出图片</li>
+        </ul>
+        <p class="asset-state" id="reverse-outdir"></p>
+      </div>
+
+      <div class="pane-foot">
+        <span id="stat-reverse-chars">0 字符</span>
+        <span id="stat-reverse-lines">0 行</span>
+        <span>转换与图片导出都在本机完成</span>
+      </div>
+    </section>
+
     <!-- 右侧：选项抽屉 + 资源 + 日志 -->
     <aside class="pane pane-side" id="pane-side">
       <div class="side-tabs" role="tablist">
         <button class="tab is-active" data-tab="options" role="tab">转换选项</button>
-        <button class="tab" data-tab="assets" role="tab">模板与图片</button>
+        <button class="tab" data-tab="assets" role="tab" data-mode="toDocx">模板与图片</button>
         <button class="tab" data-tab="log" role="tab">日志与历史</button>
       </div>
 
-      <!-- Tab 1：选项表单（由 js/options.js 依据 js/config.js 动态生成） -->
+      <!-- Tab 1：选项表单（主模式由 js/options.js 生成，反向模式由 js/reverse.js 生成） -->
       <div class="side-body" id="tab-options">
-        <form id="options-form" class="options-form" autocomplete="off"></form>
+        <form id="options-form" class="options-form" autocomplete="off" data-mode="toDocx"></form>
+        <form id="options-form-reverse" class="options-form" autocomplete="off" data-mode="toMarkdown"></form>
       </div>
 
       <!-- Tab 2：模板与图片资源 -->
@@ -150,6 +235,7 @@
     <span id="footer-message">准备就绪</span>
     <span class="spacer"></span>
     <span id="footer-version">Pandoc 版本：未知</span>
+    <span id="footer-bridge">桥接：检测中…</span>
     <span id="footer-timing"></span>
   </footer>
 
@@ -157,6 +243,8 @@
   <input type="file" id="file-md" accept=".md,.markdown,.mdown,.mkd,.txt" hidden multiple />
   <input type="file" id="file-ref" accept=".docx" hidden />
   <input type="file" id="file-img" accept="image/*" hidden multiple />
+  <!-- 反向转换：DOCX / HTML 源文件 -->
+  <input type="file" id="file-reverse" accept=".docx,.html,.htm" hidden />
 
   <!-- 轻提示容器 -->
   <div class="toast-stack" id="toast-stack"></div>
@@ -164,10 +252,12 @@
   <!-- 脚本按依赖顺序加载（无构建、无需模块服务器） -->
   <script src="js/config.js"></script>
   <script src="js/pandoc-client.js"></script>
+  <script src="js/bridge-client.js"></script>
   <script src="js/history.js"></script>
   <script src="js/options.js"></script>
   <script src="js/preview.js"></script>
   <script src="js/editor.js"></script>
+  <script src="js/reverse.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
