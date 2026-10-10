@@ -40,9 +40,9 @@
       form.appendChild(box);
     });
 
-    // 任何修改都立即持久化，刷新后不丢失
-    form.addEventListener('input', persist);
-    form.addEventListener('change', persist);
+    // 任何修改都立即持久化，并刷新预览
+    form.addEventListener('input', onOptionChange);
+    form.addEventListener('change', onOptionChange);
   }
 
   /** 创建单个字段的 DOM 结构 */
@@ -189,6 +189,17 @@
     return payload;
   }
 
+  /** 选项变化：持久化并请求刷新预览 */
+  function onOptionChange() {
+    persist();
+    schedulePreview();
+  }
+
+  /** 请求刷新预览（preview 模块可能尚未初始化） */
+  function schedulePreview() {
+    if (ns.preview && typeof ns.preview.schedule === 'function') ns.preview.schedule();
+  }
+
   /** 把当前表单值写入 localStorage */
   function persist() {
     try {
@@ -316,6 +327,7 @@
       });
       renderImageList();
       ns.bus.emit('toast', { type: 'success', text: '已添加 ' + list.length + ' 张图片' });
+      schedulePreview();
     }).catch(function (err) {
       ns.bus.emit('toast', { type: 'error', text: err.message });
     });
@@ -395,6 +407,7 @@
       inputImg.value = '';
       renderImageList();
       ns.bus.emit('toast', { type: 'info', text: '已移除全部图片' });
+      schedulePreview();
     });
   }
 
