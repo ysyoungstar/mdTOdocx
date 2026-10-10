@@ -379,6 +379,7 @@
 
   function init() {
     renderForm();
+    restore();                 // 恢复上次保存的选项（与 persist() 成对出现）
     updateReferenceState();
     renderImageList();
 

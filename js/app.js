@@ -137,7 +137,7 @@
       toast('info', '历史记录已清空');
     });
 
-    // 快捷键：Ctrl+Enter 转换，Ctrl+S 下载（等同于转换）
+    // 快捷键：Ctrl+Enter / Ctrl+S 转换（按当前方向分发），Ctrl+O 打开文件
     document.addEventListener('keydown', function (e) {
       const ctrl = e.ctrlKey || e.metaKey;
       if (ctrl && e.key === 'Enter') {
@@ -145,7 +145,7 @@
         onPrimaryAction();
       } else if (ctrl && e.key.toLowerCase() === 's') {
         e.preventDefault();
-        convert();
+        onPrimaryAction();
       } else if (ctrl && e.key.toLowerCase() === 'o') {
         e.preventDefault();
         $('file-md').click();
@@ -220,15 +220,19 @@
   /* ======================= 左右分栏拖拽 ======================= */
 
   function bindSplitter() {
-    const splitter = $('splitter');
     const main = $('app-main');
-    let dragging = false;
+    let dragging = null;
 
-    splitter.addEventListener('mousedown', function (e) {
-      if (window.innerWidth <= 1180) return;   // 窄屏为上下堆叠，不启用拖拽
-      dragging = true;
-      splitter.classList.add('is-dragging');
-      e.preventDefault();
+    // 两个分隔条（MD 模式与反向模式）共用同一套拖拽逻辑
+    ['splitter', 'splitter-reverse'].forEach(function (id) {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener('mousedown', function (e) {
+        if (window.innerWidth <= 1180) return;   // 窄屏为上下堆叠，不启用拖拽
+        dragging = el;
+        el.classList.add('is-dragging');
+        e.preventDefault();
+      });
     });
 
     window.addEventListener('mousemove', function (e) {
@@ -241,8 +245,8 @@
 
     window.addEventListener('mouseup', function () {
       if (!dragging) return;
-      dragging = false;
-      splitter.classList.remove('is-dragging');
+      dragging.classList.remove('is-dragging');
+      dragging = null;
     });
   }
 

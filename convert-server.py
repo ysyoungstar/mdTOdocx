@@ -444,14 +444,3 @@ def main(argv=None):
 
 if __name__ == '__main__':
     sys.exit(main())
-
-FLAG_OPTIONS = {                           # 布尔开关
-    'strip-comments': '--strip-comments',
-}
-
-# 不允许用户通过“额外参数”覆盖的关键参数（避免破坏输出约定）
-EXTRA_ARGS_BLACKLIST = ('-o', '--output', '--extract-media')
-
-
-class BridgeError(Exception):
-    """业务错误：错误信息会原样返回给页面显示。"""
