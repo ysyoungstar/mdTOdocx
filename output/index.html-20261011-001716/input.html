@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>食品价格表</title>
+    <link rel="stylesheet" href="./style.css" type="text/css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="./script.js" type="text/javascript" rel="script"></script>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div id="downloadContainer">
+        <button id="downloadBtn" onclick="openModal()">下载</button>
+    </div>
+    <h1>食品价格表</h1>
+    <table id="myTable">
+        <tr>
+            <th colspan="7"></th>
+        </tr>
+        <tr class="odd">
+            <td>序号</td>
+            <td>商品名称</td>
+            <td>规格</td>
+            <td>单位</td>
+            <td>单价</td>
+            <td>每袋价格(元)</td>
+            <td>每件价格(元)</td>
+        </tr>
+        <tr class="even">
+            <td>1</td>
+            <td>手工老面小笼包</td>
+            <td>5斤*4袋/件(20斤/件)</td>
+            <td>斤</td>
+            <td>9元/斤</td>
+            <td>45</td>
+            <td>180</td>
+        </tr>
+        <tr class="odd">
+            <td>2</td>
+            <td>手工烧麦</td>
+            <td>7斤*4袋/件(28斤/件)</td>
+            <td>斤</td>
+            <td>4.64元/斤</td>
+            <td>32.5</td>
+            <td>130</td>
+        </tr>
+        <tr class="even">
+            <td>3</td>
+            <td>手工蒸煎饺</td>
+            <td>2斤*10袋/件(20斤/件)</td>
+            <td>斤</td>
+            <td>4.5元/斤</td>
+            <td>9</td>
+            <td>90</td>
+        </tr>
+        <tr class="odd">
+            <td>4</td>
+            <td>手工柳叶饺</td>
+            <td>10斤*4袋/件(40斤/件)</td>
+            <td>斤</td>
+            <td>6元/斤</td>
+            <td>60</td>
+            <td>240</td>
+        </tr>
+        <tr class="even">
+            <td>5</td>
+            <td>手工馄饨</td>
+            <td>5斤*4袋/件(20斤/件)</td>
+            <td>斤</td>
+            <td>6元/斤</td>
+            <td>30</td>
+            <td>120</td>
+        </tr>
+        <tr class="odd">
+            <td>6</td>
+            <td>马蹄酥</td>
+            <td>0.72斤*16袋/件(11.52斤/件)</td>
+            <td>斤</td>
+            <td>7.8元/斤</td>
+            <td>5.6</td>
+            <td>90</td>
+        </tr>
+        <tr class="even">
+            <td>7</td>
+            <td>手工马蹄大蒸饺</td>
+            <td>5斤*4袋/件(20斤/件)【每个50克】</td>
+            <td>斤</td>
+            <td>7.5元/斤</td>
+            <td>37.5</td>
+            <td>150</td>
+        </tr>
+        <tr class="odd">
+            <td>8</td>
+            <td>水饺(含不同口味)</td>
+            <td>5斤*4袋/件(20斤/件)</td>
+            <td>斤</td>
+            <td>4.5元/斤</td>
+            <td>22.5</td>
+            <td>90</td>
+        </tr>
+        <tr class="even">
+            <td>9</td>
+            <td>花边水饺(含不同口味)</td>
+            <td>5斤*4袋/件(20斤/件)【每斤30个】</td>
+            <td>斤</td>
+            <td>6元/斤</td>
+            <td>30</td>
+            <td>120</td>
+        </tr>
+        <tr class="odd">
+            <td>10</td>
+            <td>牛肉水饺</td>
+            <td>5斤*4袋/件(20斤/件)</td>
+            <td>斤</td>
+            <td>8元/斤</td>
+            <td>40</td>
+            <td>160</td>
+        </tr>
+        <tr class="even">
+            <td>11</td>
+            <td>羊肉水饺</td>
+            <td>5斤*4袋/件(20斤/件)</td>
+            <td>斤</td>
+            <td>8元/斤</td>
+            <td>40</td>
+            <td>160</td>
+        </tr>
+        <tr class="odd">
+            <td>12</td>
+            <td>手工水饺(含不同口味)</td>
+            <td>5斤*4袋/件(20斤/件)</td>
+            <td>斤</td>
+            <td>8元/斤</td>
+            <td>40</td>
+            <td>160</td>
+        </tr>
+        <tr class="even">
+            <td>13</td>
+            <td>东北手工水饺(含不同口味)</td>
+            <td>1斤*20袋/件(20斤/件)</td>
+            <td>斤</td>
+            <td>7.5元/斤</td>
+            <td>7.5</td>
+            <td>150</td>
+        </tr>
+        <tr class="odd">
+            <td>14</td>
+            <td>大麻球</td>
+            <td>40个*4袋/件(160个/件)</td>
+            <td>袋</td>
+            <td>20元/袋</td>
+            <td>20</td>
+            <td>80</td>
+        </tr>
+        <tr class="even">
+            <td>15</td>
+            <td>糖糕</td>
+            <td>30个*4袋/件(120个/件)【每个80g】</td>
+            <td>袋</td>
+            <td>20元/袋</td>
+            <td>20</td>
+            <td>80</td>
+        </tr>
+        <tr class="odd">
+            <td>16</td>
+            <td>菜角</td>
+            <td>30个*4袋/件(120个/件)【每个80g】</td>
+            <td>袋</td>
+            <td>20元/袋</td>
+            <td>20</td>
+            <td>80</td>
+        </tr>
+        <tr class="even">
+            <td>17</td>
+            <td>菜盒</td>
+            <td>6个*12袋/件(72个/件)【每个130g】</td>
+            <td>袋</td>
+            <td>6.67元/袋</td>
+            <td>6.67</td>
+            <td>80</td>
+        </tr>
+        <tr class="odd">
+            <td>18</td>
+            <td>油条</td>
+            <td>10根*10袋/件(100根/件)【50g】</td>
+            <td>袋</td>
+            <td>6元/袋</td>
+            <td>6</td>
+            <td>60</td>
+        </tr>
+        <tr class="even">
+            <td>19</td>
+            <td>油条</td>
+            <td>10根*10袋/件(100根/件)【80g】</td>
+            <td>袋</td>
+            <td>8.5元/袋</td>
+            <td>8.5</td>
+            <td>85</td>
+        </tr>
+        <tr class="odd">
+            <td>20</td>
+            <td>油条</td>
+            <td>10根*10袋/件(100根/件)【100g】</td>
+            <td>袋</td>
+            <td>10元/袋</td>
+            <td>10</td>
+            <td>100</td>
+        </tr>
+        <tr class="even">
+            <td>21</td>
+            <td>手三全汤圆</td>
+            <td>455g*20袋/件</td>
+            <td>件</td>
+            <td>90元/件</td>
+            <td>4.5</td>
+            <td>90</td>
+        </tr>
+        <tr class="odd">
+            <td>22</td>
+            <td>海霸王甲天下汤圆</td>
+            <td>500g*20袋/件</td>
+            <td>件</td>
+            <td>90元/件</td>
+            <td>4.5</td>
+            <td>90</td>
+        </tr>
+    </table>
+    <hr>
+    <div style="margin-top:50px; padding-top:20px; border-top:1px solid #cccccc; color:#666666; font-size:14px; line-height:1.6;">
+    <p>免责声明：本页面及导出的.xlsx表格为内部价格记录工具，仅供内部人员查阅使用，不用于商业推广与销售。页面及导出的.xlsx表格中出现的所有商品品牌名称仅用于标识货品，与各品牌不存在合作、授权关系，不构成任何品牌背书。价格信息仅作参考，不具备法律效力。</p>
+    </div>
+    <div id= "infoModal">
+        <div class="modal-content">
+            <h3>填写配送信息</h3>
+            <div class="form-item">
+                <label for="shopName">超市名称:</label>
+                <input type="text" id="shopName" placeholder="请输入超市名称">
+            </div>
+            <div class="form-item">
+                <label for="userName">联系人姓名:</label>
+                <input type="text" id="userName" placeholder="请输入联系人姓名">
+            <div>
+            <div class="form-item">
+                <label for="userPhone">联系电话:</label>
+                <input type="tel" id="userPhone" placeholder="请输入联系电话">
+            </div>
+            <div class="modal-btn-group ">
+                <button class="modal-btn cancel-btn" onclick="closeModal()">取消</button>
+                <button class="modal-btn confirm-btn" onclick="confirmExport()">确认导出</button>
+            <div>
+        <div>
+    <div>
+</body>
+</html>
