@@ -381,8 +381,8 @@
   display: grid;
   place-items: center;
   padding: 20px;
-  color: #9aa4b2;
-  background: #fff;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
   font-size: 13px;
   text-align: center;
 }
@@ -465,12 +465,14 @@
    反向转换（Word / HTML → Markdown）
    ============================================================= */
 
-/* 转换方向显隐：body[data-mode] 决定显示哪一组面板 */
-body[data-mode="toDocx"] [data-mode="toMarkdown"] {
+/* 转换方向显隐：body[data-mode] 是全局状态，data-pane-mode 标记面板归属。
+   注意：顶栏的模式按钮使用 data-target，绝不能加 data-pane-mode，
+   否则按钮会被这两条规则自己隐藏（切换失效的根因）。 */
+body[data-mode="toDocx"] [data-pane-mode="toMarkdown"] {
   display: none !important;
 }
 
-body[data-mode="toMarkdown"] [data-mode="toDocx"] {
+body[data-mode="toMarkdown"] [data-pane-mode="toDocx"] {
   display: none !important;
 }
 

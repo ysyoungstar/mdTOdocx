@@ -543,9 +543,10 @@
     }
   }
 
-  /** 组装预览文档（复用主预览的样式表，保证观感一致） */
+  /** 组装预览文档（复用主预览的样式表，保证观感一致并跟随主题） */
   function buildPreviewDocument(bodyHtml) {
-    const css = (ns.preview && ns.preview.PREVIEW_CSS) || '';
+    const css = (ns.preview && typeof ns.preview.currentCss === 'function')
+      ? ns.preview.currentCss() : '';
     return '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><style>' +
       css + '</style></head><body class="pandoc-body">' + bodyHtml + '</body></html>';
   }
@@ -655,10 +656,17 @@
     setStatus('等待转换');
   }
 
+  /** 主题切换后重绘结果预览（仅在预览已渲染过时重绘） */
+  function refreshTheme() {
+    if (!frame || !frame.srcdoc) return;
+    renderPreview();
+  }
+
   ns.reverse = {
     init: init,
     convert: convert,
     clearAll: clearAll,
+    refreshTheme: refreshTheme,
     isReady: function () { return !!sourceText; }
   };
 })(window.MD2DOCX);

@@ -85,6 +85,9 @@
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     try { localStorage.setItem(ns.CONFIG.themeKey, theme); } catch (e) { /* 忽略 */ }
+    // 预览 iframe 里的样式是脚本生成的，必须重绘才能跟随主题变色
+    if (ns.preview && typeof ns.preview.refreshTheme === 'function') ns.preview.refreshTheme();
+    if (ns.reverse && typeof ns.reverse.refreshTheme === 'function') ns.reverse.refreshTheme();
   }
 
   /* ======================= 轻提示 ======================= */
@@ -170,7 +173,7 @@
     Array.prototype.forEach.call(
       document.querySelectorAll('.mode-switch .mode-btn'),
       function (btn) {
-        btn.classList.toggle('is-active', btn.dataset.mode === currentMode);
+        btn.classList.toggle('is-active', btn.dataset.target === currentMode);
       }
     );
 
@@ -199,8 +202,8 @@
     if (!box) return;
     Array.prototype.forEach.call(box.querySelectorAll('.mode-btn'), function (btn) {
       btn.addEventListener('click', function () {
-        if (btn.dataset.mode === currentMode) return;
-        applyMode(btn.dataset.mode);
+        if (btn.dataset.target === currentMode) return;
+        applyMode(btn.dataset.target);
         toast('info', currentMode === 'toMarkdown'
           ? '已切换到 Word / HTML → Markdown'
           : '已切换到 Markdown → Word');

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="css/components.css" />
 </head>
 <body data-mode="toDocx">
-  <!-- 当前转换方向由 body[data-mode] 控制：toDocx = Markdown→Word，toMarkdown = Word/HTML→Markdown -->
+  <!-- 转换方向：body[data-mode] 是全局状态；面板用 data-pane-mode，模式按钮用 data-target -->
   <!-- ============ 顶栏：标题 + 状态 + 主操作 ============ -->
   <header class="app-header">
     <div class="brand">
@@ -24,8 +24,8 @@
     <div class="header-actions">
       <!-- 转换方向切换 -->
       <div class="mode-switch" id="mode-switch" role="tablist" title="切换转换方向">
-        <button class="mode-btn is-active" id="mode-to-docx" data-mode="toDocx" role="tab">MD → Word</button>
-        <button class="mode-btn" id="mode-to-markdown" data-mode="toMarkdown" role="tab">Word/HTML → MD</button>
+        <button class="mode-btn is-active" id="mode-to-docx" data-target="toDocx" role="tab">MD → Word</button>
+        <button class="mode-btn" id="mode-to-markdown" data-target="toMarkdown" role="tab">Word/HTML → MD</button>
       </div>
       <!-- 服务状态灯：点击可重新检测 -->
       <button class="status-pill" id="server-status" data-state="unknown" title="点击重新检测 Pandoc 服务">
@@ -42,7 +42,7 @@
   <!-- ============ 主体：编辑 / 预览 / 选项 ============ -->
   <main class="app-main" id="app-main">
     <!-- 左侧：Markdown 编辑器（Markdown → Word 模式） -->
-    <section class="pane pane-editor" id="pane-editor" data-mode="toDocx">
+    <section class="pane pane-editor" id="pane-editor" data-pane-mode="toDocx">
       <div class="pane-head">
         <h2 class="pane-title">Markdown 源文件</h2>
         <div class="pane-tools">
@@ -68,10 +68,10 @@
     </section>
 
     <!-- 可拖拽分隔条 -->
-    <div class="splitter" id="splitter" title="拖动调整宽度" data-mode="toDocx"></div>
+    <div class="splitter" id="splitter" title="拖动调整宽度" data-pane-mode="toDocx"></div>
 
     <!-- 中间：预览面板（Markdown → Word 模式） -->
-    <section class="pane pane-preview" id="pane-preview" data-mode="toDocx">
+    <section class="pane pane-preview" id="pane-preview" data-pane-mode="toDocx">
       <div class="pane-head">
         <h2 class="pane-title">实时预览</h2>
         <div class="pane-tools">
@@ -92,7 +92,7 @@
 
     <!-- ============ 反向模式（Word/HTML → Markdown） ============ -->
     <!-- 左栏：源文件（DOCX 文件或 HTML 源码） -->
-    <section class="pane pane-editor" id="pane-reverse-source" data-mode="toMarkdown">
+    <section class="pane pane-editor" id="pane-reverse-source" data-pane-mode="toMarkdown">
       <div class="pane-head">
         <h2 class="pane-title">源文件（DOCX / HTML）</h2>
         <div class="pane-tools">
@@ -117,10 +117,10 @@
     </section>
 
     <!-- 可拖拽分隔条（反向模式） -->
-    <div class="splitter" id="splitter-reverse" title="拖动调整宽度" data-mode="toMarkdown"></div>
+    <div class="splitter" id="splitter-reverse" title="拖动调整宽度" data-pane-mode="toMarkdown"></div>
 
     <!-- 中栏：转换结果 Markdown -->
-    <section class="pane pane-preview" id="pane-reverse-result" data-mode="toMarkdown">
+    <section class="pane pane-preview" id="pane-reverse-result" data-pane-mode="toMarkdown">
       <div class="pane-head">
         <h2 class="pane-title">转换结果 Markdown</h2>
         <div class="pane-tools">
@@ -172,14 +172,14 @@
     <aside class="pane pane-side" id="pane-side">
       <div class="side-tabs" role="tablist">
         <button class="tab is-active" data-tab="options" role="tab">转换选项</button>
-        <button class="tab" data-tab="assets" role="tab" data-mode="toDocx">模板与图片</button>
+        <button class="tab" data-tab="assets" role="tab" data-pane-mode="toDocx">模板与图片</button>
         <button class="tab" data-tab="log" role="tab">日志与历史</button>
       </div>
 
       <!-- Tab 1：选项表单（主模式由 js/options.js 生成，反向模式由 js/reverse.js 生成） -->
       <div class="side-body" id="tab-options">
-        <form id="options-form" class="options-form" autocomplete="off" data-mode="toDocx"></form>
-        <form id="options-form-reverse" class="options-form" autocomplete="off" data-mode="toMarkdown"></form>
+        <form id="options-form" class="options-form" autocomplete="off" data-pane-mode="toDocx"></form>
+        <form id="options-form-reverse" class="options-form" autocomplete="off" data-pane-mode="toMarkdown"></form>
       </div>
 
       <!-- Tab 2：模板与图片资源 -->

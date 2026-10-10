@@ -71,7 +71,7 @@ echo  Notes:
 echo    - port 3030 is the pandoc conversion service; it is used by the
  echo      web page only, so opening it in a browser returns 404 by design.
 echo    - port %BRIDGE_PORT% is the local bridge (convert-server.py) used for
- echo      Word/HTML -> Markdown and for exporting document images.
+ echo      Word/HTML to Markdown, and for exporting document images.
 echo    - all services listen on IPv4 loopback %BIND_IP%, so localhost
  echo      can never fall back to IPv6 ::1 and fail to connect.
 echo    - closing this window does NOT stop the services.
