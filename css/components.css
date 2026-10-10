@@ -537,9 +537,12 @@ body[data-mode="toMarkdown"] [data-pane-mode="toDocx"] {
 }
 
 /* ---------- 结果区：文本 / 预览 面板 ---------- */
+/* 注意：.preview-wrap 不是 flex 容器，在这里用 flex 伸缩会失效，
+   面板高度会塌成内容高度，内部 iframe 的 height:100% 随之失效并回退到默认 150px。
+   因此改为绝对定位铺满 .preview-wrap（它本身已是 position:relative）。 */
 .reverse-panel {
-  flex: 1 1 auto;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
   display: flex;
 }
 

@@ -518,7 +518,7 @@
     const text = outputBox.value;
     if (!text.trim()) {
       frame.srcdoc = '';
-      setStatus('没有可预览的内容', 'error');
+      setStatus('结果区还没有内容：请先完成一次转换', 'error');
       return;
     }
     setStatus('渲染预览中…');
@@ -644,6 +644,13 @@
     const btnPreview = $('btn-view-preview');
     if (btnPreview) {
       btnPreview.addEventListener('click', function () {
+        // 结果为空时留在文本视图：否则会切到一个空白预览页，看起来像“预览坏了”
+        if (!outputBox.value.trim()) {
+          showPanel('text');
+          renderPreview();   // 由它统一更新状态提示
+          toast('warning', '还没有转换结果：请先点“转换为 Markdown”');
+          return;
+        }
         showPanel('preview');
         renderPreview();
       });
