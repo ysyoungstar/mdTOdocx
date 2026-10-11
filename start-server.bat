@@ -49,23 +49,32 @@ echo.
 
 :pandocready
 
-set "PYTHON_CMD="
-where python >nul 2>nul
-if not errorlevel 1 set "PYTHON_CMD=python"
-if defined PYTHON_CMD goto pyready
-where py >nul 2>nul
-if not errorlevel 1 set "PYTHON_CMD=py"
+rem --- locate a usable Python 3: py launcher -> PATH -> usual folders ---
+set "PY_EXE="
+call :findpy
+if defined PY_EXE goto pyready
+
+rem --- still missing: run the automatic setup helper (setup-python.bat) ---
+echo [py] python was not found - running setup-python.bat ...
+echo.
+set "M2D_NO_PAUSE=1"
+call "%APP_DIR%\setup-python.bat" -MinVersion 3.7
+set "M2D_NO_PAUSE="
+rem a fresh install is not on the PATH of this already running session,
+rem :findpy looks into the official install folders as well
+call :findpy
+
 :pyready
-if defined PYTHON_CMD goto startweb
+if defined PY_EXE goto startweb
 goto nopython
 
 :startweb
 echo [1/4] starting pandoc server on port %PANDOC_PORT% ...
 start "pandoc-server" /min /d "%APP_DIR%" pandoc server -p %PANDOC_PORT% -t %PANDOC_TIMEOUT%
 echo [2/4] starting page server on %BIND_IP%:%WEB_PORT% ...
-start "md2docx-web" /min /d "%APP_DIR%" %PYTHON_CMD% "%APP_DIR%\serve-pages.py" %WEB_PORT% %BIND_IP%
+start "md2docx-web" /min /d "%APP_DIR%" "%PY_EXE%" "%APP_DIR%\serve-pages.py" %WEB_PORT% %BIND_IP%
 echo [3/4] starting markdown bridge on %BIND_IP%:%BRIDGE_PORT% ...
-start "md2docx-bridge" /min /d "%APP_DIR%" %PYTHON_CMD% convert-server.py --port %BRIDGE_PORT% --timeout %BRIDGE_TIMEOUT%
+start "md2docx-bridge" /min /d "%APP_DIR%" "%PY_EXE%" "%APP_DIR%\convert-server.py" --port %BRIDGE_PORT% --timeout %BRIDGE_TIMEOUT%
 echo [4/4] waiting for page server and bridge ...
 powershell -NoProfile -Command "for($i=0;$i -lt 24;$i++){ $a=Get-NetTCPConnection -LocalPort %WEB_PORT% -State Listen -ErrorAction SilentlyContinue; $b=Get-NetTCPConnection -LocalPort %BRIDGE_PORT% -State Listen -ErrorAction SilentlyContinue; if($a -and $b){ exit 0 }; Start-Sleep -Milliseconds 500 }; exit 1"
 if errorlevel 1 goto notready
@@ -73,9 +82,11 @@ start "" "%PAGE_URL%"
 goto report
 
 :nopython
-echo [2/4] python not found.
+echo [2/4] python is still not available - running without the local services.
 echo       - the page server is skipped, index.html is opened directly
 echo       - Word/HTML to Markdown needs the bridge: DISABLED without Python 3
+echo       - try the helper again: setup-python.bat
+echo         or install it manually: https://www.python.org/downloads/windows/
 timeout /t 2 /nobreak >nul
 start "" "%APP_DIR%\index.html"
 goto report
@@ -112,4 +123,30 @@ echo.
 pause
 endlocal
 goto :eof
-rem REVISION=5
+
+rem ------------------------------------------------------------
+rem  helper: locate a real python.exe
+rem  1) the py launcher knows every registered installation
+rem  2) python on PATH (the Microsoft Store alias stub is skipped)
+rem  3) the official install folders, because a fresh install does not
+rem     appear on the PATH of this already running session
+rem ------------------------------------------------------------
+:findpy
+for /f "delims=" %%i in ('py -3 -c "import sys;print(sys.executable)" 2^>nul') do set "PY_EXE=%%i"
+if defined PY_EXE if exist "%PY_EXE%" goto :eof
+set "PY_EXE="
+for /f "delims=" %%i in ('where python 2^>nul') do call :acceptexe "%%i"
+if defined PY_EXE goto :eof
+for /d %%d in ("%LOCALAPPDATA%\Programs\Python\Python3*") do call :acceptexe "%%d\python.exe"
+if defined PY_EXE goto :eof
+for /d %%d in ("%ProgramFiles%\Python3*") do call :acceptexe "%%d\python.exe"
+if defined PY_EXE goto :eof
+if not "%ProgramFiles(x86)%"=="" for /d %%d in ("%ProgramFiles(x86)%\Python3*") do call :acceptexe "%%d\python.exe"
+goto :eof
+
+:acceptexe
+if not exist "%~1" goto :eof
+echo %~1| find /i "WindowsApps" >nul && goto :eof
+set "PY_EXE=%~1"
+goto :eof
+rem REVISION=6

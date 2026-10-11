@@ -32,14 +32,18 @@
 
 - Windows 系统，已安装 Pandoc 3.x（`pandoc --version` 可正常输出；需带 `+server` 特性，官方发行版自带）
   - 没有安装或版本不合适？双击 **`setup-pandoc.bat`** 会自动检查并安装到合适版本（见 §九）
-- Python 3：用于页面静态服务与**反向转换桥接服务**（`convert-server.py`）
-  - 未安装时：页面仍可打开（脚本会改用 `file://` 直接打开），但 **Word / HTML → Markdown 不可用**
+- Python 3.7 或更高：用于页面静态服务与**反向转换桥接服务**（`convert-server.py`）
+  - 两个脚本只使用 Python 标准库，**不需要 pip 安装任何依赖包**
+  - 没有 Python 或版本过低？双击 **`setup-python.bat`** 会自动检查并安装合适的版本（见 §九）
+  - 已经有 Python 时脚本只做检测与报告，**既不会下载也不会安装**；已装的 Microsoft Store 版 / Anaconda 也会被识别并跳过
+  - 完全没有 Python 时：页面仍可打开（脚本会改用 `file://` 直接打开），但 **Word / HTML → Markdown 与图片导出到本地文件夹不可用**
 - 现代浏览器（Edge / Chrome / Firefox 均可）
 
 ## 三、快速开始
 
 0. （可选）双击 `setup-pandoc.bat`：检查 Pandoc 环境，缺失时自动安装
    - `start-server.bat` 检测不到 pandoc 时也会自动执行同样的流程
+   - Python 的同类脚本是 `setup-python.bat`（检查 Python 3，缺失时自动安装；同样由 `start-server.bat` 自动触发，装完继续启动服务）
 1. 双击 `start-server.bat`
    - 它会启动 `pandoc server`（端口 3030）、页面静态服务 `serve-pages.py`（端口 8080，响应不带缓存，前端改动刷新即生效）与反向转换桥接（端口 3040），并自动打开浏览器
    - 若浏览器未自动打开，请手动访问 `http://127.0.0.1:8080/`
@@ -87,7 +91,9 @@ mdTOdocx/
 ├─ assets/sample.md      示例文档
 ├─ setup-pandoc.bat      环境自检入口（双击：检查 / 自动安装 Pandoc）
 ├─ setup-pandoc.ps1      Pandoc 检测与安装逻辑（winget 优先，GitHub zip 兜底）
-├─ start-server.bat      启动服务并打开页面（缺 pandoc 时自动调用 setup-pandoc.bat）
+├─ setup-python.bat      环境自检入口（双击：检查 / 自动安装 Python 3）
+├─ setup-python.ps1      Python 检测与安装逻辑（winget 优先，python.org 安装包 / 国内镜像兜底）
+├─ start-server.bat      启动服务并打开页面（缺 pandoc / Python 时自动调用对应 setup 脚本）
 ├─ stop-server.bat       停止服务
 ├─ LICENSE               许可证（MIT，版权归 ysyoungstar）
 └─ README.md             本说明
@@ -208,6 +214,19 @@ setup-pandoc.bat -Method zip
 
 转换前页面会自动比对并提示以上问题；“日志与历史 → 本次转换消息”里也会列出**本次请求实际携带的模板与图片清单**，可据此确认资源是否真的发给了 Pandoc。
 
+**18. 电脑没装 Python 会怎样？**
+- 页面仍能打开（`start-server.bat` 会退化为直接打开 `index.html`），**MD → Word 照常可用**（它依赖 pandoc server）
+- 不可用的是：`http://127.0.0.1:8080/` 静态页面服务（改为本地文件方式打开）与**反向转换 Word/HTML → Markdown**
+- 双击 `setup-python.bat`，或直接运行 `start-server.bat`，都会自动装好 Python 3 并配置好 PATH
+
+**19. Python 装到哪了？怎么卸载？**
+- 用官方默认位置（用户级安装）：`%LOCALAPPDATA%\Programs\Python\Python3xx`；脚本**从不指定自定义目录**
+- 卸载：Windows「设置 → 应用 → 已安装的应用」里找到 Python 3.x 卸载，或执行 `winget uninstall Python.Python.3.13`
+- 只是想确认状态：`setup-python.bat -DryRun`（只报告，不做任何改动）
+
+**20. 我已经有 Python（例如 Microsoft Store 版或 Anaconda），会被覆盖吗？**
+- 不会。只要能找到**可运行且版本 ≥ 3.7** 的 Python，脚本只打印报告并直接退出，**不下载也不安装**
+- 只有找不到、跑不起来（例如 Store 的别名占位程序）或版本过低时才会安装；确实想重装可加 `-Force`
 
 ## 八、已知限制
 
@@ -219,12 +238,15 @@ setup-pandoc.bat -Method zip
 - 实时预览与转换都依赖本机 pandoc 服务：服务停止时预览区会显示“无法连接 Pandoc 服务”，重新运行 start-server.bat 即可恢复。
 - 转换在本机完成，文档内容不会上传到外部服务器
 
-## 九、环境自检与自动安装 Pandoc
+## 九、环境自检与自动安装（Pandoc / Python）
 
-项目自带两个脚本，把“装 Pandoc”这一步自动化：
+项目自带两组脚本，把“装 Pandoc”和“装 Python”这两步自动化：
 
 - **`setup-pandoc.bat`**：双击即用，检查本机 Pandoc 是否满足要求，不满足就自动安装
 - **`setup-pandoc.ps1`**：实际逻辑（由 bat 调用，也可直接用 PowerShell 运行）
+- **`setup-python.bat`** / **`setup-python.ps1`**：同一套思路，负责 Python 3（见 9.2）
+
+### 9.1 Pandoc
 
 判定标准（三项都满足才算“就绪”）：
 
@@ -250,6 +272,62 @@ setup-pandoc.bat -Force                     即使当前可用也重装为最新
 
 退出码：`0` 表示 Pandoc 已就绪，`1` 表示失败（窗口会保留错误信息）。
 `start-server.bat` 在检测不到 pandoc 时，会自动执行等价于 `setup-pandoc.bat -MinVersion 3.0` 的流程，刷新当前会话的 PATH 后再继续启动。
+
+### 9.2 Python
+
+**`setup-python.bat`**（双击即用）与 **`setup-python.ps1`**（实际逻辑，由 bat 调用）负责本项目需要的 Python 3。
+
+判定标准（**能真正运行且版本达标**才算“就绪”）：
+
+1. 依次查找：`py` 启动器（`py -3`）→ PATH 上的 `python` / `python3` → 官方安装目录、Anaconda / Miniconda、Scoop、Chocolatey
+2. 每个候选都会实际执行 `python --version`，因此 Microsoft Store 的别名占位程序与损坏的安装不会被误判成“已有”
+3. 版本需 ≥ `-MinVersion`（默认 **3.7**：两个脚本用到的 `ThreadingHTTPServer`、`SimpleHTTPRequestHandler(directory=)` 需要 3.7 及以上）
+
+**已经有可用 Python 时不会下载也不会安装**，只打印检测报告并退出 `0`；只有加 `-Force` 才会重新安装。
+
+安装方式（仅在确实需要时）：
+
+- 优先 **winget**：`winget install -e --id Python.Python.3.13 --silent`（按 3.15 → 3.14 → 3.13 → 3.12 依次尝试）
+- winget 不可用或失败时回退**官方安装包**：先探测最新稳定版（读取 `python.org/ftp/python/` 目录列表，自动排除 a/b/rc 预发布），再按本机架构选择 `python-<版本>-amd64.exe` / `-arm64.exe` / `python-<版本>.exe`
+- 官方源不可达时再回退**国内镜像**（华为云 / npmmirror），无需手工干预；如果你的网络访问 python.org 会超时，直接加 `-Method mirror` 可让镜像排在第一位、少等一会儿
+
+安装参数（**安装选项全部勾选 + 使用官方默认安装位置**，用户级安装，不需要管理员）：
+
+```
+InstallAllUsers=0 PrependPath=1 Include_launcher=1 InstallLauncherAllUsers=0
+Include_pip=1 Include_doc=1 Include_dev=1 Include_exe=1 Include_lib=1
+Include_test=1 Include_tcltk=1 Include_tools=1 AssociateFiles=1
+Shortcuts=1 CompileAll=1
+```
+
+- 不传 `TargetDir`，因此使用官方默认位置：用户级为 `%LOCALAPPDATA%\Programs\Python\Python3xx`；`-Scope AllUsers` 时为 `%ProgramFiles%\Python3xx`（会弹 UAC）
+- “Download debug binaries / symbols”默认不勾选（勾上会让下载从约 30 MB 涨到 400 MB 以上），需要时加 `-IncludeDebug`
+- 默认 `/passive`（显示进度条、无人值守）；加 `-Quiet` 则完全无窗口
+
+安装完成后的**自动配置**：
+
+1. 从注册表重建当前会话的 PATH，使本次运行立刻可用
+2. 从 `HKCU\Software\Python\PythonCore\<版本>\InstallPath` 读取真实安装目录，并幂等追加到**用户 PATH**（同时包含 `Scripts` 目录；不修改系统 PATH）
+3. 冒烟验证：`python --version` → 导入 `http.server, json, subprocess, zipfile` 等标准库 → 用 `compile()` 校验 `serve-pages.py` 与 `convert-server.py` 的语法（不会在项目里留下 `__pycache__` 目录）
+
+常用参数：
+
+```
+setup-python.bat                            检查，需要时安装
+setup-python.bat -DryRun                    只检查并打印将要执行的操作，不做任何修改
+setup-python.bat -MinVersion 3.8            提高最低版本要求
+setup-python.bat -RequiredVersion 3.13.7    指定精确版本
+setup-python.bat -Method official           跳过 winget，直接用 python.org 安装包
+setup-python.bat -Method mirror             优先使用国内镜像
+setup-python.bat -Scope AllUsers            为所有用户安装（需要管理员）
+setup-python.bat -IncludeDebug              额外勾选 debug binaries / symbols
+setup-python.bat -Quiet                     安装过程完全静默
+setup-python.bat -Force                     即使当前可用也重新安装最新版
+```
+
+退出码：`0` 表示 Python 已就绪，`1` 表示失败（窗口会保留错误信息）。
+
+`start-server.bat` 的配合方式：先按「`py -3` → PATH → 官方安装目录」查找 Python；找不到就自动执行等价于 `setup-python.bat -MinVersion 3.7` 的流程，然后再查找一次（新装的 Python 不会出现在已运行窗口的 PATH 里，所以会直接查安装目录），最后用**完整路径**启动两个服务。仍然失败时才会退化为“只打开 index.html，反向转换不可用”。
 
 ## 十、许可证
 
