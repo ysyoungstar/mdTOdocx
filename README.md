@@ -31,12 +31,15 @@
 ## 二、环境要求
 
 - Windows 系统，已安装 Pandoc 3.x（`pandoc --version` 可正常输出；需带 `+server` 特性，官方发行版自带）
+  - 没有安装或版本不合适？双击 **`setup-pandoc.bat`** 会自动检查并安装到合适版本（见 §九）
 - Python 3：用于页面静态服务与**反向转换桥接服务**（`convert-server.py`）
   - 未安装时：页面仍可打开（脚本会改用 `file://` 直接打开），但 **Word / HTML → Markdown 不可用**
 - 现代浏览器（Edge / Chrome / Firefox 均可）
 
 ## 三、快速开始
 
+0. （可选）双击 `setup-pandoc.bat`：检查 Pandoc 环境，缺失时自动安装
+   - `start-server.bat` 检测不到 pandoc 时也会自动执行同样的流程
 1. 双击 `start-server.bat`
    - 它会启动 `pandoc server`（端口 3030）、页面静态服务 `serve-pages.py`（端口 8080，响应不带缓存，前端改动刷新即生效）与反向转换桥接（端口 3040），并自动打开浏览器
    - 若浏览器未自动打开，请手动访问 `http://127.0.0.1:8080/`
@@ -82,8 +85,11 @@ mdTOdocx/
 │  ├─ history.js         历史记录持久化
 │  └─ app.js             入口：状态检测、模式切换、转换流程、日志
 ├─ assets/sample.md      示例文档
-├─ start-server.bat      启动服务并打开页面
+├─ setup-pandoc.bat      环境自检入口（双击：检查 / 自动安装 Pandoc）
+├─ setup-pandoc.ps1      Pandoc 检测与安装逻辑（winget 优先，GitHub zip 兜底）
+├─ start-server.bat      启动服务并打开页面（缺 pandoc 时自动调用 setup-pandoc.bat）
 ├─ stop-server.bat       停止服务
+├─ LICENSE               许可证（MIT，版权归 ysyoungstar）
 └─ README.md             本说明
 ```
 
@@ -163,6 +169,22 @@ docx 需要先转成 base64 再传给桥接服务，请求体大约增大约三�
 **13. 顶栏的模式按钮点了没反应，或两个按钮都不高亮**
 这是浏览器仍在使用旧版 `js/app.js` 的典型表现（旧代码读取的属性名与新页面不一致），按上一条处理缓存即可恢复。
 
+**14. 提示 pandoc 未安装，或版本不合适**
+双击 `setup-pandoc.bat` 即可自动检查并按需安装（`start-server.bat` 检测不到时也会自动调用）。只想先看看会做什么，可加 `-DryRun`，它不做任何修改：
+
+```
+setup-pandoc.bat -DryRun
+```
+
+**15. 公司网络受限，winget 装不上 Pandoc**
+改用官方 zip 方式（解压到用户目录，不需要管理员权限）：
+
+```
+setup-pandoc.bat -Method zip
+```
+
+也可以手动安装：`winget install -e --id JohnMacFarlane.Pandoc`，或到 https://pandoc.org/installing.html 下载官方 MSI。
+
 
 ## 八、已知限制
 
@@ -173,3 +195,49 @@ docx 需要先转成 base64 再传给桥接服务，请求体大约增大约三�
 - 页面本身不执行任何文档中的脚本：预览使用 `sandbox` 的 iframe 渲染
 - 实时预览与转换都依赖本机 pandoc 服务：服务停止时预览区会显示“无法连接 Pandoc 服务”，重新运行 start-server.bat 即可恢复。
 - 转换在本机完成，文档内容不会上传到外部服务器
+
+## 九、环境自检与自动安装 Pandoc
+
+项目自带两个脚本，把“装 Pandoc”这一步自动化：
+
+- **`setup-pandoc.bat`**：双击即用，检查本机 Pandoc 是否满足要求，不满足就自动安装
+- **`setup-pandoc.ps1`**：实际逻辑（由 bat 调用，也可直接用 PowerShell 运行）
+
+判定标准（三项都满足才算“就绪”）：
+
+1. 能找到 `pandoc.exe`（PATH 或常见安装目录）
+2. 版本 ≥ `-MinVersion`（默认 3.0）
+3. 带 `+server` 特性，且 `pandoc server --help` 可以执行
+
+安装方式（自动选择）：
+
+- 优先使用 **winget**：`winget install -e --id JohnMacFarlane.Pandoc --silent`
+- winget 不可用或失败时**回退**为：从 GitHub 官方 Release 下载 `pandoc-<版本>-windows-x86_64.zip`，解压到 `%LOCALAPPDATA%\Pandoc`，并把该目录幂等追加到**用户 PATH**（不需要管理员权限，也不改动系统 PATH）
+
+常用参数：
+
+```
+setup-pandoc.bat                            检查，需要时安装
+setup-pandoc.bat -DryRun                    只检查并打印将要执行的操作，不做任何修改
+setup-pandoc.bat -MinVersion 3.1            提高最低版本要求
+setup-pandoc.bat -RequiredVersion 3.12.1    指定精确版本
+setup-pandoc.bat -Method zip                强制使用 GitHub zip 方式
+setup-pandoc.bat -Force                     即使当前可用也重装为最新版
+```
+
+退出码：`0` 表示 Pandoc 已就绪，`1` 表示失败（窗口会保留错误信息）。
+`start-server.bat` 在检测不到 pandoc 时，会自动执行等价于 `setup-pandoc.bat -MinVersion 3.0` 的流程，刷新当前会话的 PATH 后再继续启动。
+
+## 十、许可证
+
+本项目采用 **MIT 许可证**，完整文本见根目录 `LICENSE`。
+
+- **版权（Copyright）归 ysyoungstar 所有**，作者保留全部权利
+- 任何人都可以**免费使用、复制、修改、合并、发布、再分发、再授权，包括商业用途**
+- 唯一的义务：在软件的所有副本或实质性部分中**保留 `LICENSE` 中的版权声明与许可声明**
+- 软件按“现状（AS IS）”提供，不附带任何明示或暗示的担保
+
+第三方组件说明：
+
+- **Pandoc**（https://pandoc.org）采用 GPL-2.0-or-later。本项目只在运行时通过命令行调用本机已安装的 Pandoc，既不修改也不打包分发其源码或二进制，因此本仓库可按 MIT 授权；若你自行分发 Pandoc 安装包，需单独遵守其 GPL 条款
+- **Python 标准库**用于 `serve-pages.py` 与 `convert-server.py`，采用 PSF 许可证

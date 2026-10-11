@@ -24,8 +24,30 @@ echo ============================================
 echo  Project folder: %APP_DIR%
 echo.
 
+rem --- make the usual pandoc install folders visible for this session ---
+rem (a zip or manual install may exist on disk without being on PATH yet)
+if exist "%LOCALAPPDATA%\Pandoc\pandoc.exe" set "PATH=%PATH%;%LOCALAPPDATA%\Pandoc"
+if exist "%ProgramFiles%\Pandoc\pandoc.exe" set "PATH=%PATH%;%ProgramFiles%\Pandoc"
+set "PF86=%ProgramFiles(x86)%"
+if defined PF86 if exist "%PF86%\Pandoc\pandoc.exe" set "PATH=%PATH%;%PF86%\Pandoc"
+where pandoc >nul 2>nul
+if not errorlevel 1 goto pandocready
+
+rem --- still missing: run the automatic setup helper (setup-pandoc.bat) ---
+echo [0/4] pandoc was not found - running setup-pandoc.bat ...
+echo.
+set "M2D_NO_PAUSE=1"
+call "%APP_DIR%\setup-pandoc.bat" -MinVersion 3.0
+set "M2D_NO_PAUSE="
+rem a fresh install may land in one of the folders above
+if exist "%LOCALAPPDATA%\Pandoc\pandoc.exe" set "PATH=%PATH%;%LOCALAPPDATA%\Pandoc"
+if exist "%ProgramFiles%\Pandoc\pandoc.exe" set "PATH=%PATH%;%ProgramFiles%\Pandoc"
 where pandoc >nul 2>nul
 if errorlevel 1 goto nopandoc
+echo [0/4] pandoc is available now - continuing.
+echo.
+
+:pandocready
 
 set "PYTHON_CMD="
 where python >nul 2>nul
@@ -83,10 +105,11 @@ endlocal
 goto :eof
 
 :nopandoc
-echo [ERROR] pandoc was not found in PATH.
-echo         Install it first: https://pandoc.org/installing.html
+echo [ERROR] pandoc is still not available.
+echo         Try the helper first: setup-pandoc.bat -Method zip
+echo         Or install it manually: https://pandoc.org/installing.html
 echo.
 pause
 endlocal
 goto :eof
-rem REVISION=3
+rem REVISION=5
