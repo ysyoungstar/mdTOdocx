@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Markdown 转 Word · Pandoc 可视化工具</title>
   <!-- 样式按模块拆分，便于维护；?v= 参数用于绕过浏览器缓存（改动后递增） -->
-  <link rel="stylesheet" href="css/base.css?v=4" />
-  <link rel="stylesheet" href="css/layout.css?v=4" />
-  <link rel="stylesheet" href="css/components.css?v=4" />
+  <link rel="stylesheet" href="css/base.css?v=5" />
+  <link rel="stylesheet" href="css/layout.css?v=5" />
+  <link rel="stylesheet" href="css/components.css?v=5" />
 </head>
 <body data-mode="toDocx">
   <!-- 转换方向：body[data-mode] 是全局状态；面板用 data-pane-mode，模式按钮用 data-target -->
@@ -186,9 +186,11 @@
       <div class="side-body" id="tab-assets" hidden>
         <div class="field-group">
           <h3 class="group-title">Word 模板（reference.docx）</h3>
-          <p class="hint">选择自定义模板可控制字体、页边距与样式。模板会以 base64 发送给 Pandoc。</p>
+          <p class="hint">模板仅在导出 DOCX 时生效（右侧实时预览使用 Pandoc 默认样式，不含模板）。模板会以 base64 随请求发送给 Pandoc。</p>
+          <p class="hint">提示：Pandoc 只读取模板里的标准样式（Body Text、Heading 1、First Paragraph 等），请用下方「下载标准模板」得到的文件改字体/页边距/样式后再选回来，效果最可靠。</p>
           <div class="row">
             <button type="button" class="btn btn-outline" id="btn-open-ref">选择模板</button>
+            <button type="button" class="btn btn-mini" id="btn-make-ref" title="生成一份含 Pandoc 标准样式的模板，改好后选回来">下载标准模板</button>
             <button type="button" class="btn btn-mini" id="btn-clear-ref" disabled>移除</button>
           </div>
           <p class="asset-state" id="ref-state">未选择模板，将使用 Pandoc 默认样式</p>
@@ -196,11 +198,12 @@
 
         <div class="field-group">
           <h3 class="group-title">图片资源</h3>
-          <p class="hint">选择图片后会随请求一起发送；点击文件名可把图片引用插入正文。</p>
+          <p class="hint">添加图片后会随请求一起发送；默认自动把引用 ![](文件名) 插入正文，也可点击文件名手动再插入一次。</p>
           <div class="row">
             <button type="button" class="btn btn-outline" id="btn-open-img">添加图片</button>
             <button type="button" class="btn btn-mini" id="btn-clear-img" disabled>全部移除</button>
           </div>
+          <label class="check-field"><input type="checkbox" id="auto-insert-images" checked /><span>添加后自动把引用插入正文</span></label>
           <ul class="asset-list" id="image-list"></ul>
         </div>
       </div>
@@ -250,14 +253,14 @@
   <div class="toast-stack" id="toast-stack"></div>
 
   <!-- 脚本按依赖顺序加载（无构建、无需模块服务器）；?v= 参数用于绕过浏览器缓存 -->
-  <script src="js/config.js?v=4"></script>
-  <script src="js/pandoc-client.js?v=4"></script>
-  <script src="js/bridge-client.js?v=4"></script>
-  <script src="js/history.js?v=4"></script>
-  <script src="js/options.js?v=4"></script>
-  <script src="js/preview.js?v=4"></script>
-  <script src="js/editor.js?v=4"></script>
-  <script src="js/reverse.js?v=4"></script>
-  <script src="js/app.js?v=4"></script>
+  <script src="js/config.js?v=5"></script>
+  <script src="js/pandoc-client.js?v=5"></script>
+  <script src="js/bridge-client.js?v=5"></script>
+  <script src="js/history.js?v=5"></script>
+  <script src="js/options.js?v=5"></script>
+  <script src="js/preview.js?v=5"></script>
+  <script src="js/editor.js?v=5"></script>
+  <script src="js/reverse.js?v=5"></script>
+  <script src="js/app.js?v=5"></script>
 </body>
 </html>

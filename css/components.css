@@ -304,6 +304,23 @@
   white-space: nowrap;
 }
 
+/* ---------- 图片资源的“是否已插入正文”状态徽标 ---------- */
+.asset-item-state {
+  flex: 0 0 auto;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-hover);
+  white-space: nowrap;
+}
+
+.asset-item-state.is-in {
+  color: #1a7f37;
+  background: rgba(26, 127, 55, 0.12);
+}
+
 .asset-item .size {
   color: var(--text-muted);
   font-size: 11px;

@@ -309,6 +309,70 @@
     return 'document-' + stamp + '.docx';
   }
 
+  /**
+   * 比对正文里的图片引用与请求里实际携带的资源。
+   * @returns {{messages:Array, warnings:Array, refs:Array, images:Array}}
+   *   messages 会写进“本次转换消息”，warnings 会即时提示用户。
+   */
+  function describeAssets(payload, text) {
+    const files = (payload && payload.files) || {};
+    const names = Object.keys(files);
+    const images = names.filter(function (n) { return n !== 'reference.docx'; });
+    const messages = [];
+    const warnings = [];
+
+    // 1) 资源清单：让用户一眼确认模板/图片是否真的随请求发出去了
+    const parts = [];
+    const refDoc = payload && payload['reference-doc'];
+    if (refDoc && files[refDoc]) {
+      // base64 长度换算成大致字节数
+      parts.push('模板 ' + refDoc + '（约 ' +
+        ns.client.formatBytes(Math.round(files[refDoc].length * 3 / 4)) + '）');
+    }
+    if (images.length) parts.push('图片 ' + images.length + ' 张：' + images.join('、'));
+    messages.push({
+      message: parts.length ? '本次请求已携带：' + parts.join('；')
+        : '本次请求未包含模板与图片',
+      verbosity: parts.length ? 'OK' : 'INFO'
+    });
+
+    // 2) 正文引用与实际资源的比对
+    const refs = [];
+    const pattern = /!\[[^\]]*\]\(\s*(<[^>]*>|[^)\s]+)/g;
+    let match;
+    while ((match = pattern.exec(String(text || '')))) {
+      let target = match[1];
+      if (target.charAt(0) === '<') target = target.slice(1, -1);
+      if (/^(https?:|data:|#)/i.test(target)) continue;   // 远程/内联资源不做检查
+      refs.push(target);
+    }
+
+    const lowerMap = {};
+    images.forEach(function (n) { lowerMap[n.toLowerCase()] = n; });
+
+    const missing = [];
+    const caseOnly = [];
+    refs.forEach(function (t) {
+      if (images.indexOf(t) !== -1) return;
+      const other = lowerMap[t.toLowerCase()];
+      if (other) caseOnly.push(t + '（已添加的是 ' + other + '）');
+      else missing.push(t);
+    });
+
+    if (missing.length) {
+      warnings.push('正文引用了 ' + missing.length + ' 个本地图片，但没有添加对应文件，导出后不会显示：' + missing.join('、'));
+    }
+    if (caseOnly.length) {
+      warnings.push('图片文件名大小写不一致，Pandoc 会找不到（Windows 不区分，Pandoc 区分）：' + caseOnly.join('、'));
+    }
+    const unused = images.filter(function (n) { return refs.indexOf(n) === -1; });
+    if (unused.length) {
+      warnings.push('已添加但正文未引用，不会出现在 Word 中：' + unused.join('、'));
+    }
+
+    return { messages: messages, warnings: warnings, refs: refs, images: images };
+  }
+
   /** 收集内容与选项 → 调用 pandoc → 下载 docx */
   async function convert() {
     const text = ns.editor.getValue();
@@ -328,6 +392,10 @@
       payload.from = payload.from || 'markdown';
       payload.text = text;
 
+      // 先比对正文引用与实际资源并给出提示，避免出现“转换成功但静默没效果”
+      const assetInfo = describeAssets(payload, text);
+      (assetInfo.warnings || []).forEach(function (w) { toast('warning', w); });
+
       const result = await ns.client.convert(payload);
       const blob = ns.client.base64ToBlob(result.output, DOCX_MIME);
       const filename = buildFileName();
@@ -335,7 +403,7 @@
 
       const elapsed = Math.round(performance.now() - started);
       showError('无');
-      renderMessages(result.messages, filename, blob.size);
+      renderMessages((assetInfo.messages || []).concat(result.messages), filename, blob.size);
       renderHistory(ns.history.add({
         time: Date.now(),
         file: filename,
@@ -454,6 +522,8 @@
     convert: convert,
     toast: toast,
     detectServer: detectServer,
+    // 供自测/调试：比对本页发出的资源与正文引用
+    describeAssets: describeAssets,
     // 以下接口供 reverse.js 复用日志、历史与状态栏能力
     renderMessages: renderMessages,
     refreshHistory: function (list) { renderHistory(list); },

@@ -180,6 +180,14 @@
     /** 把图片引用替换为 data URL，让 iframe 能直接显示 */
   function withInlineImages(html) {
     let out = html;
+
+    // pandoc 输出会把中文、空格等字符写成百分号编码的 src，这里先解码，便于与图片原名比对
+    out = out.replace(/(<img[^>]*\ssrc=")([^"]*)(")/gi, function (whole, head, src, tail) {
+      try { return head + decodeURIComponent(src) + tail; } catch (e) { return whole; }
+    });
+
+    // 兼容 src="./名字" 这类带相对目录前缀的写法
+    out = out.replace(/(<img[^>]*\ssrc=")\.\//gi, '$1');
     (ns.assets.images || []).forEach(function (img) {
       const pattern = new RegExp('(src=["\'])' + escapeRegExp(img.name) + '(["\'])', 'g');
       out = out.replace(pattern, '$1' + img.dataUrl + '$2');

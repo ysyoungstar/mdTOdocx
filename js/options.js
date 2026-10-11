@@ -7,12 +7,15 @@
   /** 模板与图片资源（内存中保存 base64，随请求发送给 pandoc） */
   const assets = {
     referenceDoc: null,   // { name, base64, size }
-    images: []            // [{ name, base64, dataUrl, size }]
+    images: []            // [{ name, base64, dataUrl, size, inserted }]
   };
   ns.assets = assets;
 
   // pandoc 的 files 字段中，模板固定使用的路径名
   const REF_KEY = 'reference.docx';
+
+  // “添加后自动插入引用”开关的持久化键名
+  const AUTO_INSERT_KEY = 'md2docx.assets.autoInsert';
 
   /** 快捷取元素 */
   function $(id) { return document.getElementById(id); }
@@ -323,10 +326,20 @@
       list.forEach(function (asset, i) {
         asset.name = uniqueImageName(asset.name);
         asset.dataUrl = 'data:' + (files[i].type || 'image/png') + ';base64,' + asset.base64;
+        asset.inserted = false;   // 该图片的引用是否已经写进正文
         assets.images.push(asset);
       });
       renderImageList();
-      ns.bus.emit('toast', { type: 'success', text: '已添加 ' + list.length + ' 张图片' });
+      // 自动把引用插入正文（可在“模板与图片”面板里关闭此行为）
+      const autoIns = autoInsertEnabled();
+      const refs = list.map(imageRef);
+      if (autoIns && refs.length) insertImageRefs(list);
+      ns.bus.emit('toast', {
+        type: 'success',
+        text: '已添加 ' + list.length + ' 张图片' + (autoIns
+          ? '，引用已插入正文（位置不合适可在编辑器里调整）'
+          : '，点击文件名可把引用插入正文')
+      });
       schedulePreview();
     }).catch(function (err) {
       ns.bus.emit('toast', { type: 'error', text: err.message });
@@ -367,12 +380,86 @@
       li.appendChild(thumb);
       li.appendChild(name);
       li.appendChild(size);
+
+      // 状态徽标：提示该图片是否已经在正文里有引用
+      const state = document.createElement('span');
+      state.className = 'asset-item-state' + (img.inserted ? ' is-in' : '');
+      state.textContent = img.inserted ? '已在正文' : '未插入';
+      li.appendChild(state);
       li.addEventListener('click', function () {
-        const caption = img.name.replace(/\.[^.]+$/, '');
-        ns.bus.emit('insert-text', '![' + caption + '](' + img.name + ')');
+        // 引用写法与发送给 pandoc 的文件名保持一致
+        ns.bus.emit('insert-text', imageRef(img));
+        img.inserted = true;
+        renderImageList();
       });
       list.appendChild(li);
     });
+  }
+
+  /* ======================= 图片引用与标准模板 ======================= */
+
+  /** 生成 Markdown 图片引用；文件名含空格、括号等字符时用 <...> 包裹 */
+  function imageRef(img) {
+    const name = String(img && img.name ? img.name : '');
+    const caption = name.replace(/\.[^.]+$/, '');
+    const needWrap = /[\s()<>]/.test(name);
+    return '![' + caption + '](' + (needWrap ? '<' + name + '>' : name) + ')';
+  }
+
+  /** 把图片引用插入正文并标记状态（自动插入与手动点击共用同一套逻辑） */
+  function insertImageRefs(list) {
+    const items = (list || []).filter(Boolean);
+    if (!items.length) return;
+    ns.bus.emit('insert-text', items.map(imageRef).join('\n'));
+    items.forEach(function (img) { img.inserted = true; });
+    renderImageList();
+  }
+
+  /** 读取“添加后自动插入引用”开关（默认开启） */
+  function autoInsertEnabled() {
+    const box = $('auto-insert-images');
+    if (box) return !!box.checked;
+    try {
+      const raw = localStorage.getItem(AUTO_INSERT_KEY);
+      return raw === null ? true : raw === '1';
+    } catch (e) {
+      return true;
+    }
+  }
+
+  /** 生成一份含 Pandoc 标准样式的 docx，供用户改字体/页边距/样式后当模板 */
+  async function exportReferenceTemplate() {
+    // docx 的 MIME 类型（与 pandoc-client 下载时保持一致）
+    const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const sample = [
+      '# 标题 1 示例',
+      '',
+      '正文段落示例：请在这里修改字体、字号、行距与页边距。',
+      '',
+      '## 标题 2 示例',
+      '',
+      '- 列表项示例',
+      '',
+      '| 表头 | 说明 |',
+      '| --- | --- |',
+      '| 单元格 | 内容 |'
+    ].join('\n');
+    try {
+      const result = await ns.client.convert({
+        to: 'docx',
+        from: 'markdown',
+        text: sample,
+        standalone: true
+      });
+      ns.client.downloadBlob(ns.client.base64ToBlob(result.output, docxMime),
+        'pandoc-标准模板.docx');
+      ns.bus.emit('toast', {
+        type: 'success',
+        text: '已生成 pandoc-标准模板.docx：用 Word 改好字体/页边距/样式后，再用“选择模板”载入'
+      });
+    } catch (err) {
+      ns.bus.emit('toast', { type: 'error', text: '生成模板失败：' + err.message });
+    }
   }
 
   /* ======================= 初始化 ======================= */
@@ -387,6 +474,24 @@
     const inputImg = $('file-img');
 
     $('btn-open-ref').addEventListener('click', function () { inputRef.click(); });
+
+    // “下载标准模板”按钮：生成含 Pandoc 标准样式的模板
+    const btnMakeRef = $('btn-make-ref');
+    if (btnMakeRef) btnMakeRef.addEventListener('click', exportReferenceTemplate);
+
+    // “添加后自动插入引用”开关：从本地存储恢复，变化时保存
+    const autoBox = $('auto-insert-images');
+    if (autoBox) {
+      try {
+        const raw = localStorage.getItem(AUTO_INSERT_KEY);
+        autoBox.checked = raw === null ? true : raw === '1';
+      } catch (e) {
+        autoBox.checked = true;
+      }
+      autoBox.addEventListener('change', function () {
+        try { localStorage.setItem(AUTO_INSERT_KEY, autoBox.checked ? '1' : '0'); } catch (e) { /* 忽略 */ }
+      });
+    }
     inputRef.addEventListener('change', function () {
       onPickReference(inputRef.files);
       inputRef.value = '';
@@ -416,6 +521,12 @@
     init: init,
     collectPayload: collectPayload,
     resetToDefaults: resetToDefaults,
+    // 供 app.js / 控制台复用：生成标准模板、生成图片引用
+    exportReferenceTemplate: exportReferenceTemplate,
+    imageRef: imageRef,
+    insertImageRefs: insertImageRefs,
+    // 便于自测/调试：按文件列表添加图片（与“添加图片”按钮走同一套逻辑）
+    addImages: onPickImages,
     refreshAssets: function () {
       updateReferenceState();
       renderImageList();
